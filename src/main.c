@@ -20,6 +20,17 @@
 #include <SDL.h>
 #endif
 
+#define SGL_IMPLEMENTATION
+#include "sgl.h"
+
+const uint8_t* keyboard;
+struct mouse {
+	int x;
+	int y;
+	bool left;
+	bool right;
+} m;
+
 int main(int argc, char* argv[])
 {
 	SDL_Init(SDL_INIT_EVERYTHING);
@@ -43,6 +54,8 @@ int main(int argc, char* argv[])
 		= (uint32_t*)malloc(CANVAS_WIDTH * CANVAS_HEIGHT * sizeof(pixels));
 	memset(pixels, 0, CANVAS_WIDTH * CANVAS_HEIGHT * sizeof(uint32_t));
 
+	sglBuffer* buffer = sglCreateBuffer(pixels, CANVAS_WIDTH, CANVAS_HEIGHT, SGL_PIXELFORMAT_ABGR32);
+
 	SDL_Event event;
 	bool alive = true;
 	uint32_t delta = 0;
@@ -59,6 +72,16 @@ int main(int argc, char* argv[])
 				case SDL_KEYUP:
 					break;
 			}
+
+
+			uint32_t buttons = SDL_GetMouseState(&m.x, &m.y);
+			m.x /= WINDOW_WIDTH / (float)CANVAS_WIDTH;
+			m.y /= WINDOW_HEIGHT / (float)CANVAS_HEIGHT;
+			m.left = (buttons & SDL_BUTTON_LMASK) != 0;
+			m.right = (buttons & SDL_BUTTON_RMASK) != 0;
+
+			keyboard = SDL_GetKeyboardState(NULL);
+
 		}
 
 		uint32_t tic = SDL_GetTicks();
@@ -66,10 +89,10 @@ int main(int argc, char* argv[])
 
 		//////////////////////////////////////////////////////////////////////
 
-		// clear pixel buffer
-		memset(pixels, 0, CANVAS_WIDTH * CANVAS_HEIGHT * sizeof(uint32_t));
+		sglClear(buffer);
 
-		pixels[10 + 10 * CANVAS_WIDTH] = 0x00ff00ff;
+		sglDrawLine(buffer, 0xff00ffff, 15, 15, m.x, m.y);
+
 
 		//////////////////////////////////////////////////////////////////////
 
@@ -91,6 +114,8 @@ int main(int argc, char* argv[])
 			acc = 0;
 		}
 	}
+
+	sglFreeBuffer(buffer);
 
 	SDL_DestroyTexture(texture);
 	SDL_DestroyRenderer(renderer);
