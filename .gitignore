@@ -1,32 +1,11 @@
-# Prerequisites
-*.d
+build/
+.cache/
+.vimspector
 
-# Compiled Object files
-*.slo
-*.lo
-*.o
-*.obj
+compile_commands.json
+html
+latex
+tmux-client-5600.log
+src/demo.so
+tags
 
-# Precompiled Headers
-*.gch
-*.pch
-
-# Compiled Dynamic libraries
-*.so
-*.dylib
-*.dll
-
-# Fortran module files
-*.mod
-*.smod
-
-# Compiled Static libraries
-*.lai
-*.la
-*.a
-*.lib
-
-# Executables
-*.exe
-*.out
-*.app
