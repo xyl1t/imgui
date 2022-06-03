@@ -24,12 +24,17 @@
 #include "sgl.h"
 
 const uint8_t* keyboard;
-struct mouse {
-	int x;
-	int y;
-	bool left;
-	bool right;
-} m;
+
+struct UIState
+{
+  int mx;
+  int my;
+  bool ml;
+  bool mr;
+
+  int hotitem;
+  int activeitem;
+} uistate = {0,0,false,false,0,0};
 
 int main(int argc, char* argv[])
 {
@@ -54,7 +59,7 @@ int main(int argc, char* argv[])
 		= (uint32_t*)malloc(CANVAS_WIDTH * CANVAS_HEIGHT * sizeof(pixels));
 	memset(pixels, 0, CANVAS_WIDTH * CANVAS_HEIGHT * sizeof(uint32_t));
 
-	sglBuffer* buffer = sglCreateBuffer(pixels, CANVAS_WIDTH, CANVAS_HEIGHT, SGL_PIXELFORMAT_ABGR32);
+	sglBuffer* buf = sglCreateBuffer(pixels, CANVAS_WIDTH, CANVAS_HEIGHT, SGL_PIXELFORMAT_ABGR32);
 
 	SDL_Event event;
 	bool alive = true;
@@ -74,11 +79,11 @@ int main(int argc, char* argv[])
 			}
 
 
-			uint32_t buttons = SDL_GetMouseState(&m.x, &m.y);
-			m.x /= WINDOW_WIDTH / (float)CANVAS_WIDTH;
-			m.y /= WINDOW_HEIGHT / (float)CANVAS_HEIGHT;
-			m.left = (buttons & SDL_BUTTON_LMASK) != 0;
-			m.right = (buttons & SDL_BUTTON_RMASK) != 0;
+			uint32_t buttons = SDL_GetMouseState(&uistate.mx, &uistate.my);
+			uistate.mx /= WINDOW_WIDTH / (float)CANVAS_WIDTH;
+			uistate.my /= WINDOW_HEIGHT / (float)CANVAS_HEIGHT;
+			uistate.ml = (buttons & SDL_BUTTON_LMASK) != 0;
+			uistate.mr = (buttons & SDL_BUTTON_RMASK) != 0;
 
 			keyboard = SDL_GetKeyboardState(NULL);
 
@@ -89,10 +94,9 @@ int main(int argc, char* argv[])
 
 		//////////////////////////////////////////////////////////////////////
 
-		sglClear(buffer);
+		sglClear(buf);
 
-		sglDrawLine(buffer, 0xff00ffff, 15, 15, m.x, m.y);
-
+		sglFillRectangle(buf, 0x00ff00ff | (0xff << 8 * uistate.ml), 10, 10, 32, 32);
 
 		//////////////////////////////////////////////////////////////////////
 
@@ -115,7 +119,7 @@ int main(int argc, char* argv[])
 		}
 	}
 
-	sglFreeBuffer(buffer);
+	sglFreeBuffer(buf);
 
 	SDL_DestroyTexture(texture);
 	SDL_DestroyRenderer(renderer);
