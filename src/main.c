@@ -23,10 +23,14 @@
 #define SGL_IMPLEMENTATION
 #include "sgl.h"
 
+#include "logger.h"
+
+sglBuffer* buf = NULL;
+sglFont* font = NULL;
+
 const uint8_t* keyboard;
 
-struct UIState
-{
+struct UIState {
   int mx;
   int my;
   bool ml;
@@ -35,6 +39,83 @@ struct UIState
   int hotitem;
   int activeitem;
 } uistate = {0,0,false,false,0,0};
+
+bool isMouseOverRegion(int x, int y, int w, int h)
+{
+	return uistate.mx >= x && uistate.my >= y &&
+		uistate.mx < x + w && uistate.my < y + h;
+}
+
+const int BTN_WIDTH = 64;
+const int BTN_HEIGHT = 48;
+bool button(int id, int x, int y)
+{
+	if (isMouseOverRegion(x, y, BTN_WIDTH, BTN_HEIGHT)) {
+		uistate.hotitem = id;
+		if (uistate.activeitem == 0 && uistate.ml) {
+			uistate.activeitem = id;
+		}
+	}
+
+	bool isHot = uistate.hotitem == id;
+	bool isActive = uistate.activeitem == id;
+
+	if (isHot) {
+		if (isActive) {
+			sglFillRectangle(buf, 0x777777ff, x, y, BTN_WIDTH, BTN_HEIGHT);
+		} else {
+			sglFillRectangle(buf, 0xffffffff, x, y, BTN_WIDTH, BTN_HEIGHT);
+		}
+	} else {
+		sglFillRectangle(buf, 0xaaaaaaff, x, y, BTN_WIDTH, BTN_HEIGHT);
+	}
+
+	// return (uistate.ml == 0 && uistate.hotitem == id && uistate.activeitem == id);
+	return (!uistate.ml && uistate.hotitem == id && uistate.activeitem == id);
+}
+
+void imgui_prepare()
+{
+	uistate.hotitem = 0;
+}
+
+void imgui_finish()
+{
+	if (!uistate.ml) {
+		uistate.activeitem = 0;
+	}
+	// else if (uistate.activeitem == 0) {
+	// 	uistate.activeitem = -1;
+	// }
+}
+
+void render() {
+	// sglClear(buf);
+	sglFillRectangle(buf, 0x112233ff, 0, 0, buf->width, buf->height);
+
+	imgui_prepare();
+
+	button(1, 50, 50);
+
+	button(2, 150, 50);
+
+	static int count = 0;
+	if (button(3, 50, 150)) {
+		// sglDrawText(buf, "button 3 pressed", 0xffffffff, 8, 8, font);
+		logInfo("button 3 pressed %d times", count);
+		count++;
+	}
+
+	if (button(4, 150, 150)) {
+		exit(0);
+	}
+
+	imgui_finish();
+
+	///////////////
+
+	logDraw(buf, font, 256, 8);
+}
 
 int main(int argc, char* argv[])
 {
@@ -59,7 +140,8 @@ int main(int argc, char* argv[])
 		= (uint32_t*)malloc(CANVAS_WIDTH * CANVAS_HEIGHT * sizeof(pixels));
 	memset(pixels, 0, CANVAS_WIDTH * CANVAS_HEIGHT * sizeof(uint32_t));
 
-	sglBuffer* buf = sglCreateBuffer(pixels, CANVAS_WIDTH, CANVAS_HEIGHT, SGL_PIXELFORMAT_ABGR32);
+	buf = sglCreateBuffer(pixels, CANVAS_WIDTH, CANVAS_HEIGHT, SGL_PIXELFORMAT_ABGR32);
+	font = sglCreateFont("../res/xterm7x14.png", 7, 14, true);
 
 	SDL_Event event;
 	bool alive = true;
@@ -94,9 +176,11 @@ int main(int argc, char* argv[])
 
 		//////////////////////////////////////////////////////////////////////
 
-		sglClear(buf);
 
-		sglFillRectangle(buf, 0x00ff00ff | (0xff << 8 * uistate.ml), 10, 10, 32, 32);
+		// sglFillRectangle(buf, 0x00ff00ff | (0xff << 8 * uistate.ml), 10, 10, 32, 32);
+
+		render();
+		
 
 		//////////////////////////////////////////////////////////////////////
 
