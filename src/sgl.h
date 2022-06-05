@@ -10630,7 +10630,7 @@ void sglTextureTriangle(sglBuffer* buffer, sglBuffer* texture,
 void sglDrawBuffer(sglBuffer* buffer, const sglBuffer* bmp,
 		const sglRect* dstRect, const sglRect* srcRect)
 {
-	sglRect bmpClipRect = { 0, 0, buffer->width, buffer->height };
+	//sglRect bmpClipRect = { 0, 0, buffer->width, buffer->height };
 	sglRect clippedSrcRect;
 	sglRect clippedDstRect;
 	sglRect bmpRect = { 0, 0, bmp->width, bmp->height };

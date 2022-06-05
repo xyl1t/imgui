@@ -38,7 +38,13 @@ struct UIState {
 
   int hotitem;
   int activeitem;
-} uistate = {0,0,false,false,0,0};
+
+  int kbditem;
+  const uint8_t* keyentered;
+  int keymod;
+
+  int lastwidget;
+} uistate = {0,0,false,false,0,0,0,0,0,0};
 
 bool isMouseOverRegion(int x, int y, int w, int h)
 {
@@ -46,12 +52,12 @@ bool isMouseOverRegion(int x, int y, int w, int h)
 		uistate.mx < x + w && uistate.my < y + h;
 }
 
-void imgui_prepare()
+void imgui_prepare(void)
 {
 	uistate.hotitem = 0;
 }
 
-void imgui_finish()
+void imgui_finish(void)
 {
 	if (!uistate.ml) {
 		uistate.activeitem = 0;
@@ -65,15 +71,31 @@ const int BTN_WIDTH = 64;
 const int BTN_HEIGHT = 48;
 bool button(int id, int x, int y)
 {
-	if (isMouseOverRegion(x, y, BTN_WIDTH, BTN_HEIGHT)) {
+	bool isHot = isMouseOverRegion(x, y, BTN_WIDTH, BTN_HEIGHT);
+	bool isActive = false;
+	if (isHot) {
 		uistate.hotitem = id;
 		if (uistate.activeitem == 0 && uistate.ml) {
 			uistate.activeitem = id;
+			isActive = true;
 		}
 	}
 
-	bool isHot = uistate.hotitem == id;
-	bool isActive = uistate.activeitem == id;
+	if (uistate.kbditem == 0) {
+		uistate.kbditem = id;
+	}
+
+	if (uistate.kbditem == id) {
+		// TODO: draw highlighted by keyboard widget
+	}
+
+	if (uistate.kbditem == id) {
+		if (uistate.keyentered[SDL_SCANCODE_TAB]) {
+			uistate.kbditem = 0;
+		} else if (uistate.keyentered[SDL_SCANCODE_TAB] && uistate.keyentered[SDL_SCANCODE_LSHIFT]) {
+			uistate.kbditem = uistate.lastwidget;
+		}
+	}
 
 	if (isHot) {
 		if (isActive) {
@@ -215,7 +237,7 @@ int main(int argc, char* argv[])
 			uistate.ml = (buttons & SDL_BUTTON_LMASK) != 0;
 			uistate.mr = (buttons & SDL_BUTTON_RMASK) != 0;
 
-			keyboard = SDL_GetKeyboardState(NULL);
+			uistate.keyentered = SDL_GetKeyboardState(NULL);
 
 		}
 
