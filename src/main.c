@@ -62,6 +62,10 @@ void imgui_finish(void)
 	if (!uistate.ml) {
 		uistate.activeitem = 0;
 	}
+	if (uistate.keyentered && uistate.keyentered[SDL_SCANCODE_TAB]) {
+		uistate.kbditem = 0;
+	}
+	uistate.keyentered = 0;
 	// else if (uistate.activeitem == 0) {
 	// 	uistate.activeitem = -1;
 	// }
@@ -86,15 +90,7 @@ bool button(int id, int x, int y)
 	}
 
 	if (uistate.kbditem == id) {
-		// TODO: draw highlighted by keyboard widget
-	}
-
-	if (uistate.kbditem == id) {
-		if (uistate.keyentered[SDL_SCANCODE_TAB]) {
-			uistate.kbditem = 0;
-		} else if (uistate.keyentered[SDL_SCANCODE_TAB] && uistate.keyentered[SDL_SCANCODE_LSHIFT]) {
-			uistate.kbditem = uistate.lastwidget;
-		}
+		sglDrawRectangle(buf, 0xff0000ff, x-1, y-1, BTN_WIDTH+1, BTN_HEIGHT+1);
 	}
 
 	if (isHot) {
@@ -107,7 +103,23 @@ bool button(int id, int x, int y)
 		sglFillRectangle(buf, 0xaaaaaaff, x, y, BTN_WIDTH, BTN_HEIGHT);
 	}
 
-	// return (uistate.ml == 0 && uistate.hotitem == id && uistate.activeitem == id);
+	// keyboard focus
+	if (uistate.kbditem == id && uistate.keyentered) {
+
+		if (uistate.keyentered[SDL_SCANCODE_TAB]) {
+			uistate.kbditem = 0;
+
+			if (uistate.keyentered[SDL_SCANCODE_TAB] && uistate.keyentered[SDL_SCANCODE_LSHIFT]) {
+				uistate.kbditem = uistate.lastwidget;
+			}
+
+			uistate.keyentered = NULL; // absorb keyboard input so that next
+									   // widget doesn't register tab
+		} else if (uistate.keyentered[SDL_SCANCODE_RETURN]) {
+			return true;
+		}
+	}
+
 	return (!uistate.ml && uistate.hotitem == id && uistate.activeitem == id);
 }
 
@@ -169,15 +181,15 @@ void render(void) {
 	static int green = 0;
 	static int blue = 0;
 
-	if (slider(5, 300, 8, 255, &red)) {
-		bgcolor = (bgcolor & 0x00ffffff) | red << 24;
-	}
-	if (slider(6, 350, 8, 255, &green)) {
-		bgcolor = (bgcolor & 0xff00ffff) | green << 16;
-	}
-	if (slider(7, 400, 8, 255, &blue)) {
-		bgcolor = (bgcolor & 0xffff00ff) | blue << 8;
-	}
+	// if (slider(5, 300, 8, 255, &red)) {
+	// 	bgcolor = (bgcolor & 0x00ffffff) | red << 24;
+	// }
+	// if (slider(6, 350, 8, 255, &green)) {
+	// 	bgcolor = (bgcolor & 0xff00ffff) | green << 16;
+	// }
+	// if (slider(7, 400, 8, 255, &blue)) {
+	// 	bgcolor = (bgcolor & 0xffff00ff) | blue << 8;
+	// }
 
 
 	imgui_finish();
