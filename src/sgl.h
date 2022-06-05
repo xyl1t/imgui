@@ -6,243 +6,6 @@
 #include <stdint.h>
 #include <math.h>
 
-//////// STB_IMAGE /////////////////////////////////////////////
-
-#ifndef STBI_INCLUDE_STB_IMAGE_H
-#define STBI_INCLUDE_STB_IMAGE_H
-
-#ifndef STBI_NO_STDIO
-#include <stdio.h>
-#endif // STBI_NO_STDIO
-
-#define STBI_VERSION 1
-
-enum
-{
-   STBI_default = 0, // only used for desired_channels
-
-   STBI_grey       = 1,
-   STBI_grey_alpha = 2,
-   STBI_rgb        = 3,
-   STBI_rgb_alpha  = 4
-};
-
-#include <stdlib.h>
-typedef unsigned char stbi_uc;
-typedef unsigned short stbi_us;
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-#ifndef STBIDEF
-#ifdef STB_IMAGE_STATIC
-#define STBIDEF static
-#else
-#define STBIDEF extern
-#endif
-#endif
-
-//////////////////////////////////////////////////////////////////////////////
-//
-// PRIMARY API - works on images of any type
-//
-
-//
-// load image by filename, open file, or memory buffer
-//
-
-typedef struct
-{
-   int      (*read)  (void *user,char *data,int size);   // fill 'data' with 'size' bytes.  return number of bytes actually read
-   void     (*skip)  (void *user,int n);                 // skip the next 'n' bytes, or 'unget' the last -n bytes if negative
-   int      (*eof)   (void *user);                       // returns nonzero if we are at end of file/data
-} stbi_io_callbacks;
-
-////////////////////////////////////
-//
-// 8-bits-per-channel interface
-//
-
-STBIDEF stbi_uc *stbi_load_from_memory   (stbi_uc           const *buffer, int len   , int *x, int *y, int *channels_in_file, int desired_channels);
-STBIDEF stbi_uc *stbi_load_from_callbacks(stbi_io_callbacks const *clbk  , void *user, int *x, int *y, int *channels_in_file, int desired_channels);
-
-#ifndef STBI_NO_STDIO
-STBIDEF stbi_uc *stbi_load            (char const *filename, int *x, int *y, int *channels_in_file, int desired_channels);
-STBIDEF stbi_uc *stbi_load_from_file  (FILE *f, int *x, int *y, int *channels_in_file, int desired_channels);
-// for stbi_load_from_file, file pointer is left pointing immediately after image
-#endif
-
-#ifndef STBI_NO_GIF
-STBIDEF stbi_uc *stbi_load_gif_from_memory(stbi_uc const *buffer, int len, int **delays, int *x, int *y, int *z, int *comp, int req_comp);
-#endif
-
-#ifdef STBI_WINDOWS_UTF8
-STBIDEF int stbi_convert_wchar_to_utf8(char *buffer, size_t bufferlen, const wchar_t* input);
-#endif
-
-////////////////////////////////////
-//
-// 16-bits-per-channel interface
-//
-
-STBIDEF stbi_us *stbi_load_16_from_memory   (stbi_uc const *buffer, int len, int *x, int *y, int *channels_in_file, int desired_channels);
-STBIDEF stbi_us *stbi_load_16_from_callbacks(stbi_io_callbacks const *clbk, void *user, int *x, int *y, int *channels_in_file, int desired_channels);
-
-#ifndef STBI_NO_STDIO
-STBIDEF stbi_us *stbi_load_16          (char const *filename, int *x, int *y, int *channels_in_file, int desired_channels);
-STBIDEF stbi_us *stbi_load_from_file_16(FILE *f, int *x, int *y, int *channels_in_file, int desired_channels);
-#endif
-
-////////////////////////////////////
-//
-// float-per-channel interface
-//
-#ifndef STBI_NO_LINEAR
-   STBIDEF float *stbi_loadf_from_memory     (stbi_uc const *buffer, int len, int *x, int *y, int *channels_in_file, int desired_channels);
-   STBIDEF float *stbi_loadf_from_callbacks  (stbi_io_callbacks const *clbk, void *user, int *x, int *y,  int *channels_in_file, int desired_channels);
-
-   #ifndef STBI_NO_STDIO
-   STBIDEF float *stbi_loadf            (char const *filename, int *x, int *y, int *channels_in_file, int desired_channels);
-   STBIDEF float *stbi_loadf_from_file  (FILE *f, int *x, int *y, int *channels_in_file, int desired_channels);
-   #endif
-#endif
-
-#ifndef STBI_NO_HDR
-   STBIDEF void   stbi_hdr_to_ldr_gamma(float gamma);
-   STBIDEF void   stbi_hdr_to_ldr_scale(float scale);
-#endif // STBI_NO_HDR
-
-#ifndef STBI_NO_LINEAR
-   STBIDEF void   stbi_ldr_to_hdr_gamma(float gamma);
-   STBIDEF void   stbi_ldr_to_hdr_scale(float scale);
-#endif // STBI_NO_LINEAR
-
-// stbi_is_hdr is always defined, but always returns false if STBI_NO_HDR
-STBIDEF int    stbi_is_hdr_from_callbacks(stbi_io_callbacks const *clbk, void *user);
-STBIDEF int    stbi_is_hdr_from_memory(stbi_uc const *buffer, int len);
-#ifndef STBI_NO_STDIO
-STBIDEF int      stbi_is_hdr          (char const *filename);
-STBIDEF int      stbi_is_hdr_from_file(FILE *f);
-#endif // STBI_NO_STDIO
-
-
-// get a VERY brief reason for failure
-// on most compilers (and ALL modern mainstream compilers) this is threadsafe
-STBIDEF const char *stbi_failure_reason  (void);
-
-// free the loaded image -- this is just free()
-STBIDEF void     stbi_image_free      (void *retval_from_stbi_load);
-
-// get image dimensions & components without fully decoding
-STBIDEF int      stbi_info_from_memory(stbi_uc const *buffer, int len, int *x, int *y, int *comp);
-STBIDEF int      stbi_info_from_callbacks(stbi_io_callbacks const *clbk, void *user, int *x, int *y, int *comp);
-STBIDEF int      stbi_is_16_bit_from_memory(stbi_uc const *buffer, int len);
-STBIDEF int      stbi_is_16_bit_from_callbacks(stbi_io_callbacks const *clbk, void *user);
-
-#ifndef STBI_NO_STDIO
-STBIDEF int      stbi_info               (char const *filename,     int *x, int *y, int *comp);
-STBIDEF int      stbi_info_from_file     (FILE *f,                  int *x, int *y, int *comp);
-STBIDEF int      stbi_is_16_bit          (char const *filename);
-STBIDEF int      stbi_is_16_bit_from_file(FILE *f);
-#endif
-
-
-
-// for image formats that explicitly notate that they have premultiplied alpha,
-// we just return the colors as stored in the file. set this flag to force
-// unpremultiplication. results are undefined if the unpremultiply overflow.
-STBIDEF void stbi_set_unpremultiply_on_load(int flag_true_if_should_unpremultiply);
-
-// indicate whether we should process iphone images back to canonical format,
-// or just pass them through "as-is"
-STBIDEF void stbi_convert_iphone_png_to_rgb(int flag_true_if_should_convert);
-
-// flip the image vertically, so the first pixel in the output array is the bottom left
-STBIDEF void stbi_set_flip_vertically_on_load(int flag_true_if_should_flip);
-
-// as above, but only applies to images loaded on the thread that calls the function
-// this function is only available if your compiler supports thread-local variables;
-// calling it will fail to link if your compiler doesn't
-STBIDEF void stbi_set_unpremultiply_on_load_thread(int flag_true_if_should_unpremultiply);
-STBIDEF void stbi_convert_iphone_png_to_rgb_thread(int flag_true_if_should_convert);
-STBIDEF void stbi_set_flip_vertically_on_load_thread(int flag_true_if_should_flip);
-
-// ZLIB client - used by PNG, available for other purposes
-
-STBIDEF char *stbi_zlib_decode_malloc_guesssize(const char *buffer, int len, int initial_size, int *outlen);
-STBIDEF char *stbi_zlib_decode_malloc_guesssize_headerflag(const char *buffer, int len, int initial_size, int *outlen, int parse_header);
-STBIDEF char *stbi_zlib_decode_malloc(const char *buffer, int len, int *outlen);
-STBIDEF int   stbi_zlib_decode_buffer(char *obuffer, int olen, const char *ibuffer, int ilen);
-
-STBIDEF char *stbi_zlib_decode_noheader_malloc(const char *buffer, int len, int *outlen);
-STBIDEF int   stbi_zlib_decode_noheader_buffer(char *obuffer, int olen, const char *ibuffer, int ilen);
-
-
-#ifdef __cplusplus
-}
-#endif
-
-//
-//
-////   end header file   /////////////////////////////////////////////////////
-#endif // STBI_INCLUDE_STB_IMAGE_H
-
-
-//////// STB_IMAGE /////////////////////////////////////////////
-
-//////// STB_IMAGE_WRITE /////////////////////////////////////////////
-
-#ifndef INCLUDE_STB_IMAGE_WRITE_H
-#define INCLUDE_STB_IMAGE_WRITE_H
-
-#include <stdlib.h>
-
-// if STB_IMAGE_WRITE_STATIC causes problems, try defining STBIWDEF to 'inline' or 'static inline'
-#ifndef STBIWDEF
-#ifdef STB_IMAGE_WRITE_STATIC
-#define STBIWDEF  static
-#else
-#ifdef __cplusplus
-#define STBIWDEF  extern "C"
-#else
-#define STBIWDEF  extern
-#endif
-#endif
-#endif
-
-#ifndef STB_IMAGE_WRITE_STATIC  // C++ forbids static forward declarations
-STBIWDEF int stbi_write_tga_with_rle;
-STBIWDEF int stbi_write_png_compression_level;
-STBIWDEF int stbi_write_force_png_filter;
-#endif
-
-#ifndef STBI_WRITE_NO_STDIO
-STBIWDEF int stbi_write_png(char const *filename, int w, int h, int comp, const void  *data, int stride_in_bytes);
-STBIWDEF int stbi_write_bmp(char const *filename, int w, int h, int comp, const void  *data);
-STBIWDEF int stbi_write_tga(char const *filename, int w, int h, int comp, const void  *data);
-STBIWDEF int stbi_write_hdr(char const *filename, int w, int h, int comp, const float *data);
-STBIWDEF int stbi_write_jpg(char const *filename, int x, int y, int comp, const void  *data, int quality);
-
-#ifdef STBIW_WINDOWS_UTF8
-STBIWDEF int stbiw_convert_wchar_to_utf8(char *buffer, size_t bufferlen, const wchar_t* input);
-#endif
-#endif
-
-typedef void stbi_write_func(void *context, void *data, int size);
-
-STBIWDEF int stbi_write_png_to_func(stbi_write_func *func, void *context, int w, int h, int comp, const void  *data, int stride_in_bytes);
-STBIWDEF int stbi_write_bmp_to_func(stbi_write_func *func, void *context, int w, int h, int comp, const void  *data);
-STBIWDEF int stbi_write_tga_to_func(stbi_write_func *func, void *context, int w, int h, int comp, const void  *data);
-STBIWDEF int stbi_write_hdr_to_func(stbi_write_func *func, void *context, int w, int h, int comp, const float *data);
-STBIWDEF int stbi_write_jpg_to_func(stbi_write_func *func, void *context, int x, int y, int comp, const void  *data, int quality);
-
-STBIWDEF void stbi_flip_vertically_on_write(int flip_boolean);
-
-#endif//INCLUDE_STB_IMAGE_WRITE_H
-
-//////// STB_IMAGE_WRITE /////////////////////////////////////////////
-
 #ifdef SGL_FAST_MATH
 #define SGL_FAST_MATH
 #endif
@@ -270,6 +33,9 @@ STBIWDEF void stbi_flip_vertically_on_write(int flip_boolean);
 #define sglRightKern 1
 // TODO: extract this to font level
 #define sglTextSpacing 1
+
+#define sglExpandColor32(color, pf) \
+	(color & pf->rmask) >> pf->rshift, (color & pf->gmask) >> pf->gshift, (color & pf->bmask) >> pf->bshift, (color & pf->amask) >> pf->ashift
 
 // #define _sglAlphaBlendColor(a, b, pf) buffer->alphaBlendingEnabled ? 
 
@@ -526,12 +292,14 @@ sglFont* sglCreateFont(const char* pathToFontBitmap, int fontWidth, int fontHeig
 	bool useKerning);
 void sglFreeFont(sglFont* font);
 // TODO:
-// sglDrawText(string, font, size)
 // getLetter()?
 
 /*****************************************************************************
- * GRAPHICS FUNCTIONS                                                        *
+ * DRAWING FUNCTIONS                                                         *
  *****************************************************************************/
+
+// General structure of drawing functions:
+// drawSomething(bufferToDrawOn, contentToDraw, whereOrHowToDraw)
 
 // TODO: rename sgl***Pixel() to sgl***RGB() and sgl***RGBA()
 
@@ -758,8 +526,10 @@ void sglDrawBuffer(sglBuffer* buffer, const sglBuffer* src,
  * @param y y location of text
  * @param font the font to use
  */
-void sglDrawText(sglBuffer* buffer, const char* text, int x, int y,
-	const sglFont* font);
+void sglDrawText(sglBuffer* buffer, const char* text, uint32_t color,
+	 int x, int y, const sglFont* font);
+
+
 
 
 /*****************************************************************************
@@ -922,15 +692,249 @@ uint32_t sglAlphaBlendColor(uint32_t a, uint32_t b,
  */
 const char* sglGetError(void);
 
-#endif // !SGL_H
+#endif // SGL_H
 
 
 #ifdef SGL_IMPLEMENTATION
 #undef SGL_IMPLEMENTATION
 
-#include <stdint.h>
+//////// STB_IMAGE /////////////////////////////////////////////
+
+#ifndef STBI_INCLUDE_STB_IMAGE_H
+#define STBI_INCLUDE_STB_IMAGE_H
+
+#ifndef STBI_NO_STDIO
+#include <stdio.h>
+#endif // STBI_NO_STDIO
+
+#define STBI_VERSION 1
+
+enum
+{
+   STBI_default = 0, // only used for desired_channels
+
+   STBI_grey       = 1,
+   STBI_grey_alpha = 2,
+   STBI_rgb        = 3,
+   STBI_rgb_alpha  = 4
+};
+
 #include <stdlib.h>
-#include <string.h>
+typedef unsigned char stbi_uc;
+typedef unsigned short stbi_us;
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+#ifndef STBIDEF
+#ifdef STB_IMAGE_STATIC
+#define STBIDEF static
+#else
+#define STBIDEF extern
+#endif
+#endif
+
+//////////////////////////////////////////////////////////////////////////////
+//
+// PRIMARY API - works on images of any type
+//
+
+//
+// load image by filename, open file, or memory buffer
+//
+
+typedef struct
+{
+   int      (*read)  (void *user,char *data,int size);   // fill 'data' with 'size' bytes.  return number of bytes actually read
+   void     (*skip)  (void *user,int n);                 // skip the next 'n' bytes, or 'unget' the last -n bytes if negative
+   int      (*eof)   (void *user);                       // returns nonzero if we are at end of file/data
+} stbi_io_callbacks;
+
+////////////////////////////////////
+//
+// 8-bits-per-channel interface
+//
+
+STBIDEF stbi_uc *stbi_load_from_memory   (stbi_uc           const *buffer, int len   , int *x, int *y, int *channels_in_file, int desired_channels);
+STBIDEF stbi_uc *stbi_load_from_callbacks(stbi_io_callbacks const *clbk  , void *user, int *x, int *y, int *channels_in_file, int desired_channels);
+
+#ifndef STBI_NO_STDIO
+STBIDEF stbi_uc *stbi_load            (char const *filename, int *x, int *y, int *channels_in_file, int desired_channels);
+STBIDEF stbi_uc *stbi_load_from_file  (FILE *f, int *x, int *y, int *channels_in_file, int desired_channels);
+// for stbi_load_from_file, file pointer is left pointing immediately after image
+#endif
+
+#ifndef STBI_NO_GIF
+STBIDEF stbi_uc *stbi_load_gif_from_memory(stbi_uc const *buffer, int len, int **delays, int *x, int *y, int *z, int *comp, int req_comp);
+#endif
+
+#ifdef STBI_WINDOWS_UTF8
+STBIDEF int stbi_convert_wchar_to_utf8(char *buffer, size_t bufferlen, const wchar_t* input);
+#endif
+
+////////////////////////////////////
+//
+// 16-bits-per-channel interface
+//
+
+STBIDEF stbi_us *stbi_load_16_from_memory   (stbi_uc const *buffer, int len, int *x, int *y, int *channels_in_file, int desired_channels);
+STBIDEF stbi_us *stbi_load_16_from_callbacks(stbi_io_callbacks const *clbk, void *user, int *x, int *y, int *channels_in_file, int desired_channels);
+
+#ifndef STBI_NO_STDIO
+STBIDEF stbi_us *stbi_load_16          (char const *filename, int *x, int *y, int *channels_in_file, int desired_channels);
+STBIDEF stbi_us *stbi_load_from_file_16(FILE *f, int *x, int *y, int *channels_in_file, int desired_channels);
+#endif
+
+////////////////////////////////////
+//
+// float-per-channel interface
+//
+#ifndef STBI_NO_LINEAR
+   STBIDEF float *stbi_loadf_from_memory     (stbi_uc const *buffer, int len, int *x, int *y, int *channels_in_file, int desired_channels);
+   STBIDEF float *stbi_loadf_from_callbacks  (stbi_io_callbacks const *clbk, void *user, int *x, int *y,  int *channels_in_file, int desired_channels);
+
+   #ifndef STBI_NO_STDIO
+   STBIDEF float *stbi_loadf            (char const *filename, int *x, int *y, int *channels_in_file, int desired_channels);
+   STBIDEF float *stbi_loadf_from_file  (FILE *f, int *x, int *y, int *channels_in_file, int desired_channels);
+   #endif
+#endif
+
+#ifndef STBI_NO_HDR
+   STBIDEF void   stbi_hdr_to_ldr_gamma(float gamma);
+   STBIDEF void   stbi_hdr_to_ldr_scale(float scale);
+#endif // STBI_NO_HDR
+
+#ifndef STBI_NO_LINEAR
+   STBIDEF void   stbi_ldr_to_hdr_gamma(float gamma);
+   STBIDEF void   stbi_ldr_to_hdr_scale(float scale);
+#endif // STBI_NO_LINEAR
+
+// stbi_is_hdr is always defined, but always returns false if STBI_NO_HDR
+STBIDEF int    stbi_is_hdr_from_callbacks(stbi_io_callbacks const *clbk, void *user);
+STBIDEF int    stbi_is_hdr_from_memory(stbi_uc const *buffer, int len);
+#ifndef STBI_NO_STDIO
+STBIDEF int      stbi_is_hdr          (char const *filename);
+STBIDEF int      stbi_is_hdr_from_file(FILE *f);
+#endif // STBI_NO_STDIO
+
+
+// get a VERY brief reason for failure
+// on most compilers (and ALL modern mainstream compilers) this is threadsafe
+STBIDEF const char *stbi_failure_reason  (void);
+
+// free the loaded image -- this is just free()
+STBIDEF void     stbi_image_free      (void *retval_from_stbi_load);
+
+// get image dimensions & components without fully decoding
+STBIDEF int      stbi_info_from_memory(stbi_uc const *buffer, int len, int *x, int *y, int *comp);
+STBIDEF int      stbi_info_from_callbacks(stbi_io_callbacks const *clbk, void *user, int *x, int *y, int *comp);
+STBIDEF int      stbi_is_16_bit_from_memory(stbi_uc const *buffer, int len);
+STBIDEF int      stbi_is_16_bit_from_callbacks(stbi_io_callbacks const *clbk, void *user);
+
+#ifndef STBI_NO_STDIO
+STBIDEF int      stbi_info               (char const *filename,     int *x, int *y, int *comp);
+STBIDEF int      stbi_info_from_file     (FILE *f,                  int *x, int *y, int *comp);
+STBIDEF int      stbi_is_16_bit          (char const *filename);
+STBIDEF int      stbi_is_16_bit_from_file(FILE *f);
+#endif
+
+
+
+// for image formats that explicitly notate that they have premultiplied alpha,
+// we just return the colors as stored in the file. set this flag to force
+// unpremultiplication. results are undefined if the unpremultiply overflow.
+STBIDEF void stbi_set_unpremultiply_on_load(int flag_true_if_should_unpremultiply);
+
+// indicate whether we should process iphone images back to canonical format,
+// or just pass them through "as-is"
+STBIDEF void stbi_convert_iphone_png_to_rgb(int flag_true_if_should_convert);
+
+// flip the image vertically, so the first pixel in the output array is the bottom left
+STBIDEF void stbi_set_flip_vertically_on_load(int flag_true_if_should_flip);
+
+// as above, but only applies to images loaded on the thread that calls the function
+// this function is only available if your compiler supports thread-local variables;
+// calling it will fail to link if your compiler doesn't
+STBIDEF void stbi_set_unpremultiply_on_load_thread(int flag_true_if_should_unpremultiply);
+STBIDEF void stbi_convert_iphone_png_to_rgb_thread(int flag_true_if_should_convert);
+STBIDEF void stbi_set_flip_vertically_on_load_thread(int flag_true_if_should_flip);
+
+// ZLIB client - used by PNG, available for other purposes
+
+STBIDEF char *stbi_zlib_decode_malloc_guesssize(const char *buffer, int len, int initial_size, int *outlen);
+STBIDEF char *stbi_zlib_decode_malloc_guesssize_headerflag(const char *buffer, int len, int initial_size, int *outlen, int parse_header);
+STBIDEF char *stbi_zlib_decode_malloc(const char *buffer, int len, int *outlen);
+STBIDEF int   stbi_zlib_decode_buffer(char *obuffer, int olen, const char *ibuffer, int ilen);
+
+STBIDEF char *stbi_zlib_decode_noheader_malloc(const char *buffer, int len, int *outlen);
+STBIDEF int   stbi_zlib_decode_noheader_buffer(char *obuffer, int olen, const char *ibuffer, int ilen);
+
+
+#ifdef __cplusplus
+}
+#endif
+
+//
+//
+////   end header file   /////////////////////////////////////////////////////
+#endif // STBI_INCLUDE_STB_IMAGE_H
+
+
+//////// STB_IMAGE /////////////////////////////////////////////
+
+//////// STB_IMAGE_WRITE /////////////////////////////////////////////
+
+#ifndef INCLUDE_STB_IMAGE_WRITE_H
+#define INCLUDE_STB_IMAGE_WRITE_H
+
+#include <stdlib.h>
+
+// if STB_IMAGE_WRITE_STATIC causes problems, try defining STBIWDEF to 'inline' or 'static inline'
+#ifndef STBIWDEF
+#ifdef STB_IMAGE_WRITE_STATIC
+#define STBIWDEF  static
+#else
+#ifdef __cplusplus
+#define STBIWDEF  extern "C"
+#else
+#define STBIWDEF  extern
+#endif
+#endif
+#endif
+
+#ifndef STB_IMAGE_WRITE_STATIC  // C++ forbids static forward declarations
+STBIWDEF int stbi_write_tga_with_rle;
+STBIWDEF int stbi_write_png_compression_level;
+STBIWDEF int stbi_write_force_png_filter;
+#endif
+
+#ifndef STBI_WRITE_NO_STDIO
+STBIWDEF int stbi_write_png(char const *filename, int w, int h, int comp, const void  *data, int stride_in_bytes);
+STBIWDEF int stbi_write_bmp(char const *filename, int w, int h, int comp, const void  *data);
+STBIWDEF int stbi_write_tga(char const *filename, int w, int h, int comp, const void  *data);
+STBIWDEF int stbi_write_hdr(char const *filename, int w, int h, int comp, const float *data);
+STBIWDEF int stbi_write_jpg(char const *filename, int x, int y, int comp, const void  *data, int quality);
+
+#ifdef STBIW_WINDOWS_UTF8
+STBIWDEF int stbiw_convert_wchar_to_utf8(char *buffer, size_t bufferlen, const wchar_t* input);
+#endif
+#endif
+
+typedef void stbi_write_func(void *context, void *data, int size);
+
+STBIWDEF int stbi_write_png_to_func(stbi_write_func *func, void *context, int w, int h, int comp, const void  *data, int stride_in_bytes);
+STBIWDEF int stbi_write_bmp_to_func(stbi_write_func *func, void *context, int w, int h, int comp, const void  *data);
+STBIWDEF int stbi_write_tga_to_func(stbi_write_func *func, void *context, int w, int h, int comp, const void  *data);
+STBIWDEF int stbi_write_hdr_to_func(stbi_write_func *func, void *context, int w, int h, int comp, const float *data);
+STBIWDEF int stbi_write_jpg_to_func(stbi_write_func *func, void *context, int x, int y, int comp, const void  *data, int quality);
+
+STBIWDEF void stbi_flip_vertically_on_write(int flip_boolean);
+
+#endif//INCLUDE_STB_IMAGE_WRITE_H
+
+//////// STB_IMAGE_WRITE /////////////////////////////////////////////
+
 
 //////// STB_IMAGE_IMPLEMENTATION /////////////////////////////////////////////
 
@@ -9492,6 +9496,12 @@ STBIWDEF int stbi_write_jpg(char const *filename, int x, int y, int comp, const 
 
 //////// STB_IMAGE_WRITE_IMPLEMENTATION /////////////////////////////////////////////
 
+// sglimpl
+
+#include <stdint.h>
+#include <stdlib.h>
+#include <string.h>
+
 static int sgl_max(int a, int b) { return a > b ? a : b; }
 static int sgl_min(int a, int b) { return a < b ? a : b; }
 
@@ -10675,8 +10685,8 @@ void sglDrawBuffer(sglBuffer* buffer, const sglBuffer* bmp,
 	}
 }
 
-void sglDrawText(sglBuffer* buffer, const char* text, int x, int y,
-		const sglFont* font)
+void sglDrawText(sglBuffer* buffer, const char* text, uint32_t color,
+	 int x, int y, const sglFont* font)
 {
 	if (!font) return;
 
@@ -10715,8 +10725,8 @@ void sglDrawText(sglBuffer* buffer, const char* text, int x, int y,
 					letterBmpX * font->fontWidth + fontPixelX,
 					letterBmpY * font->fontHeight + fontPixelY);
 
-					if (r != 0 || g != 0) {
-					sglDrawPixel(buffer, r, g, b, a,
+				if (r != 0) {
+					sglDrawPixelRaw(buffer, color,
 						x + fontPixelX - leftKern + cursorCol,
 						y + fontPixelY + cursorRow * font->fontHeight);
 				}
@@ -10983,7 +10993,33 @@ uint32_t sglAlphaBlendColor(uint32_t a, uint32_t b,
 	return sglMapRGBA(result_r, result_g, result_b, 255, pf);
 }
 
+// uint32_t sglAlphaBlendColor(const sglPixelFormat* pf,
+// 		uint32_t a, uint32_t b) {
+// 
+// 	uint8_t r_a, g_a, b_a, a_a;
+// 	sglGetRGBA(a, pf, &r_a, &g_a, &b_a, &a_a);
+// 	uint8_t r_b, g_b, b_b, a_b;
+// 	sglGetRGBA(b, pf, &r_b, &g_b, &b_b, &a_b);
+// 
+// 	float alpha_a = a_a / 255.f;
+// 	float alpha_b = a_b / 255.f;
+// 
+// 	// float newAlpha = a1 + a2 - a1 * a2 / 256;
+// 	float newAlpha = alpha_a + alpha_b * (1 - alpha_a);
+// 
+// 	uint8_t result_r = (r_a * alpha_a + r_b * alpha_b * (1 - a_a)) / newAlpha;
+// 	uint8_t result_g = (g_a * alpha_a + g_b * alpha_b * (1 - a_a)) / newAlpha;
+// 	uint8_t result_b = (b_a * alpha_a + b_b * alpha_b * (1 - a_a)) / newAlpha;
+// 
+// 	// NOTE: maybe instead of 255, newAlpha should be passed?
+// 	return sglMapRGBA(result_r, result_g, result_b, 255, pf);
+// }
+
 const char* sglGetError(void) { return _sglError; }
+
+// sglimpl
+
+
 
 #endif // SGL_IMPLEMENTATION
 
