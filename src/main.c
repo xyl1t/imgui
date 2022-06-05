@@ -46,6 +46,21 @@ bool isMouseOverRegion(int x, int y, int w, int h)
 		uistate.mx < x + w && uistate.my < y + h;
 }
 
+void imgui_prepare()
+{
+	uistate.hotitem = 0;
+}
+
+void imgui_finish()
+{
+	if (!uistate.ml) {
+		uistate.activeitem = 0;
+	}
+	// else if (uistate.activeitem == 0) {
+	// 	uistate.activeitem = -1;
+	// }
+}
+
 const int BTN_WIDTH = 64;
 const int BTN_HEIGHT = 48;
 bool button(int id, int x, int y)
@@ -74,24 +89,42 @@ bool button(int id, int x, int y)
 	return (!uistate.ml && uistate.hotitem == id && uistate.activeitem == id);
 }
 
-void imgui_prepare()
-{
-	uistate.hotitem = 0;
-}
+bool slider(int id, int x, int y, int max, int* value) {
+	int ypos = ((256 - 16) * (*value)) / max;
 
-void imgui_finish()
-{
-	if (!uistate.ml) {
-		uistate.activeitem = 0;
+	if (isMouseOverRegion(x + 8, y + 8, 16, 255)) {
+		uistate.hotitem = id;
+		if (uistate.activeitem == 0 && uistate.ml) {
+			uistate.activeitem = id;
+		}
 	}
-	// else if (uistate.activeitem == 0) {
-	// 	uistate.activeitem = -1;
-	// }
+
+	sglFillRectangle(buf, 0x777777ff, x, y, 32, 256+16);
+
+	if (uistate.activeitem == id || uistate.hotitem == id) {
+		sglFillRectangle(buf, 0xffffffff, x + 8, y + 8 + ypos, 16, 16);
+	} else {
+		sglFillRectangle(buf, 0xaaaaaaff, x + 8, y + 8 + ypos, 16, 16);
+	}
+
+	if (uistate.activeitem == id) {
+		int mousepos = uistate.my - (y + 8);
+		if (mousepos < 0) mousepos = 0;
+		if (mousepos > 255) mousepos = 255;
+		int v = (mousepos * max) / 255;
+		if (v != *value) {
+			*value = v;
+			return true;
+		}
+	}
+
+	return false;
 }
 
-void render() {
+void render(void) {
 	// sglClear(buf);
-	sglFillRectangle(buf, 0x112233ff, 0, 0, buf->width, buf->height);
+	static uint32_t bgcolor = 0x112233ff;
+	sglFillRectangle(buf, bgcolor, 0, 0, buf->width, buf->height);
 
 	imgui_prepare();
 
@@ -109,6 +142,21 @@ void render() {
 	if (button(4, 150, 150)) {
 		exit(0);
 	}
+
+	static int red = 0;
+	static int green = 0;
+	static int blue = 0;
+
+	if (slider(5, 300, 8, 255, &red)) {
+		bgcolor = (bgcolor & 0x00ffffff) | red << 24;
+	}
+	if (slider(6, 350, 8, 255, &green)) {
+		bgcolor = (bgcolor & 0xff00ffff) | green << 16;
+	}
+	if (slider(7, 400, 8, 255, &blue)) {
+		bgcolor = (bgcolor & 0xffff00ff) | blue << 8;
+	}
+
 
 	imgui_finish();
 
