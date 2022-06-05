@@ -75,15 +75,15 @@ const int BTN_WIDTH = 64;
 const int BTN_HEIGHT = 48;
 bool button(int id, int x, int y)
 {
-	bool isHot = isMouseOverRegion(x, y, BTN_WIDTH, BTN_HEIGHT);
-	bool isActive = false;
-	if (isHot) {
+	if (isMouseOverRegion(x, y, BTN_WIDTH, BTN_HEIGHT)) {
 		uistate.hotitem = id;
 		if (uistate.activeitem == 0 && uistate.ml) {
 			uistate.activeitem = id;
-			isActive = true;
 		}
 	}
+
+	bool isHot = uistate.hotitem == id;
+	bool isActive = uistate.activeitem == id;
 
 	if (uistate.kbditem == 0) {
 		uistate.kbditem = id;
